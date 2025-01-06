@@ -109,13 +109,13 @@ jobs:
       - name: Terraform Plan
         run: |
           echo "Running Terraform Plan with environment-specific tfvars..."
-          ENV_TFVARS="${{ github.event.inputs.resourcetype }}/environments/${{ github.event.inputs.environment }}/terraform.tfvars"
+          ENV_TFVARS="terraform/environments/${{ github.event.inputs.environment }}/terraform.tfvars"
           terraform -chdir=${{ env.TF_WORKING_DIR }} plan -out=tfplan -var-file=${{ github.workspace }}/${ENV_TFVARS}
 
       - name: Terraform Apply
         run: |
           echo "Applying Terraform Plan..."
-          ENV_TFVARS="${{ github.event.inputs.resourcetype }}/environments/${{ github.event.inputs.environment }}/terraform.tfvars"
+          ENV_TFVARS="terraform/environments/${{ github.event.inputs.environment }}/terraform.tfvars"
           # Apply with correct path to tfvars file
           terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve -var-file=${{ github.workspace }}/${ENV_TFVARS}
 
