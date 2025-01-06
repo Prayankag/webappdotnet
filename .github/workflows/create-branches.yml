@@ -1,0 +1,45 @@
+on:
+  workflow_dispatch:  # This can be triggered by Backstage when needed
+
+jobs:
+  create-branches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.data }}
+
+      - name: Set Git Config
+        run: |
+          git config --global user.email "prayanka.gochipatula@valuemomentum.com"
+          git config --global user.name "prayankag"
+
+      - name: Ensure 'main' branch exists
+        run: |
+          if git show-ref --verify --quiet refs/heads/main; then
+            echo "'main' branch already exists."
+          else
+            echo "'main' branch does not exist. Creating 'main' branch."
+            git checkout --orphan main
+            git rm -rf .
+            echo "Initial commit for main" > README.md
+            git add README.md
+            git commit -m "Initial commit"
+            git push origin main
+          fi
+
+      - name: Ensure 'dev' branch exists
+        run: |
+          if git show-ref --verify --quiet refs/heads/dev; then
+            echo "'dev' branch already exists."
+          else
+            echo "'dev' branch does not exist. Creating 'dev' branch."
+            git checkout --orphan dev
+            git rm -rf .
+            echo "Initial commit for dev" > README.md
+            git add README.md
+            git commit -m "Initial commit"
+            git push origin dev
+          fi

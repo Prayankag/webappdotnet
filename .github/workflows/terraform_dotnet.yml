@@ -1,0 +1,266 @@
+name: Terraform and Dotnet Deployment Workflow
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to main branch
+  workflow_dispatch:
+    inputs:
+      resourcetype:
+        description: 'resourcetype to deploy (e.g., VM , Webapp)'
+        required: true
+        default: 'vm'  # Default value for resourcetype input
+      environment:
+        description: 'Environment to deploy (e.g., dev, prod)'
+        required: false
+        default: 'dev'  # Default value for environment input
+      appname:
+        description: 'The Azure Web App name for deployment'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-deployment:
+    runs-on: ubuntu-latest
+    env:
+      TF_WORKING_DIR: ${{ github.workspace }}/${{ github.event.inputs.resourcetype }}/modules/${{ github.event.inputs.resourcetype }}  # Correct working directory
+      GO_VERSION: '1.21.0'
+      TF_VERSION: '1.3.5'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: List Working Directory
+        run: |
+          echo "Listing the contents of the working directory..."
+          ls -al $GITHUB_WORKSPACE
+
+      - name: Setup Azure Login using Service Principal
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install Terraform ${{ env.TF_VERSION }}
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Clean Go Cache
+        run: |
+          echo "Cleaning Go Cache..."
+          go clean -modcache
+
+      - name: Terraform Init
+        run: |
+          terraform -chdir=${{ env.TF_WORKING_DIR }} init -upgrade
+
+      - name: Terraform Validate
+        run: |
+          terraform -chdir=${{ env.TF_WORKING_DIR }} validate
+
+      - name: Run Unit Tests with Terratest
+        run: |
+          cd ${{ env.TF_WORKING_DIR }}
+          export TF_VAR_ENV="${{ github.event.inputs.environment }}"
+
+          # Initialize Go module if not already initialized
+          if [ ! -f "go.mod" ]; then
+            echo "Initializing Go module..."
+            go mod init $(basename ${{ env.TF_WORKING_DIR }})
+          else
+            echo "go.mod already exists, skipping initialization."
+          fi
+
+          # Install dependencies
+          echo "Installing Go dependencies..."
+          if ! go list -m github.com/gruntwork-io/terratest/modules/terraform > /dev/null 2>&1; then
+            echo "Dependency not found, fetching..."
+            go get github.com/gruntwork-io/terratest/modules/terraform
+          else
+            echo "Dependency already exists, skipping download..."
+          fi
+          
+          # Explicitly install golang.org/x/crypto
+          go get golang.org/x/crypto
+
+          go mod tidy
+          go test -v
+
+      - name: Terraform Plan
+        run: |
+          echo "Running Terraform Plan with environment-specific tfvars..."
+          ENV_TFVARS="${{ github.event.inputs.resourcetype }}/environments/${{ github.event.inputs.environment }}/terraform.tfvars"
+          terraform -chdir=${{ env.TF_WORKING_DIR }} plan -out=tfplan -var-file=${{ github.workspace }}/${ENV_TFVARS}
+
+      - name: Terraform Apply
+        run: |
+          echo "Applying Terraform Plan..."
+          ENV_TFVARS="${{ github.event.inputs.resourcetype }}/environments/${{ github.event.inputs.environment }}/terraform.tfvars"
+          # Apply with correct path to tfvars file
+          terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve -var-file=${{ github.workspace }}/${ENV_TFVARS}
+
+      - name: Remove terraform.lock.hcl
+        run: |
+          echo "Removing terraform.lock.hcl after applying..."
+          rm -f ${{ env.TF_WORKING_DIR }}/terraform.lock.hcl
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: terraform-deployment  # Ensure it runs after terraform deployment
+    outputs:
+      artifact-path: ${{ steps.upload-artifact.outputs.artifact-path }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0'
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore calculator/*.csproj
+
+      - name: Build the .NET project
+        run: |
+          dotnet build calculator/*.csproj --configuration Release
+
+      - name: Run unit tests
+        run: |
+          dotnet test calculator/*.csproj --configuration Release
+
+      - name: Prepare SonarQube Analysis
+        run: |
+          echo "Simulating SonarQube Preparation..."
+          sleep 10
+
+      - name: Run SonarQube Analysis
+        run: |
+          echo "Simulating SonarQube Analysis..."
+          sleep 10
+
+      - name: Publish the .NET project directly to wwwroot
+        run: |
+          dotnet publish calculator/*.csproj --configuration Release --output ./wwwroot
+
+      - name: Create Artifact for Deployment
+        run: |
+          cd wwwroot && zip -r -X ../drop.zip .
+
+      - name: Upload Artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: drop.zip
+          path: drop.zip
+
+  deploy-to-dev:
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Azure Login using Service Principal
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: drop.zip
+          path: ./
+
+      - name: Deploy to Dev Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ github.event.inputs.appname }}
+          package: ./drop.zip
+
+      - name: Validate Dev Deployment
+        id: validate-dev
+        run: |
+          curl -s --head --request GET https://${{ github.event.inputs.appname }}.azurewebsites.net/ || exit 1
+
+  deploy-to-staging:
+    runs-on: ubuntu-latest
+    needs: deploy-to-dev
+    if: ${{ needs.deploy-to-dev.result == 'success' }}
+    environment:
+      name: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Azure Login using Service Principal
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Request Approval to Deploy to Staging
+        uses: github-actions/approval-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: 'staging'
+          approvers: 'staging-team'
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: drop.zip
+          path: ./
+
+      - name: Deploy to Staging Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ secrets.AZURE_STAGING_WEBAPP_NAME }}
+          package: ./drop.zip
+
+  deploy-to-production:
+    runs-on: ubuntu-latest
+    needs: deploy-to-staging
+    if: ${{ needs.deploy-to-staging.result == 'success' }}
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Azure Login using Service Principal
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Request Approval to Deploy to Production
+        uses: github-actions/approval-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: 'production'
+          approvers: 'production-team'
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: drop.zip
+          path: ./
+
+      - name: Deploy to Production Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          appname: ${{ secrets.AZURE_PRODUCTION_WEBAPP_NAME }}
+          package: ./drop.zip
