@@ -43,7 +43,7 @@ variable "client_id" {
   type        = string
   default     = "a2d89136-b086-4755-9f98-af856c2d8c30"  # Use "Windows" for a Windows app
 }
-variable "client_secret" {
+variable "clientsecret" {
   type        = string
  }
 variable "tenant_id" {
