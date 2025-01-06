@@ -1,45 +1,44 @@
 apiVersion: backstage.io/v1alpha1
 kind: System
 metadata:
-  name: webapp-dotnet
-  description: "webapp demo"
+  name: demowebappinstance
+  description: demowebappinstance
 spec:
-  owner: prayankag
+  owner: group:default/prayankag
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: webapp-dotnet
-  description: "webapp demo"
+  name: demowebappinstance
+  description: demowebappinstance
   annotations:
      backstage.io/techdocs-ref: dir:./docs
-     github.com/project-slug: prayankag/devwebapp1/actions
+     github.com/project-slug: prayankag/demowebinstance
      github-actions: enabled
      github.com/workflows: |
       [
         {
-          "workflow": "terraform_dotnet",
+          "workflow": "instance.yaml",
           "label": "Start",
           "tooltip": "click here and start the workflow process"
         }
       ]
 spec:
   type: service
-  owner: prayankag
+  owner: group:default/prayankag
   lifecycle: experimental
-  system: webapp-dotnet
+  system: demowebappinstance
   providesApis:
-    - webapp-dotnet
+    - demowebappinstance
 ---
 apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
-  name: webapp-dotnet
-  description: "webapp demo"
+  name: demowebappinstance
+  description: demowebappinstance
 spec:
   type: internal
   lifecycle: experimental
-  owner: prayankag
-  system: webapp-dotnet
-  definition: "webapp demo"
-
+  owner: group:default/prayankag
+  system: demowebappinstance
+  definition: "demowebappinstance"
