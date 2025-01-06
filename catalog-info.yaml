@@ -13,7 +13,7 @@ metadata:
   description: "webapp demo"
   annotations:
      backstage.io/techdocs-ref: dir:./docs
-     github.com/project-slug: prayankag/devwebapp/actions
+     github.com/project-slug: prayankag/devwebapp1/actions
      github-actions: enabled
      github.com/workflows: |
       [
