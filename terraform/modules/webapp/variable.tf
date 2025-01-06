@@ -40,6 +40,7 @@ variable "client_id" {
 }
 variable "clientsecret" {
   type        = string
+  default     = "test"
   }
 variable "tenant_id" {
   type        = string
