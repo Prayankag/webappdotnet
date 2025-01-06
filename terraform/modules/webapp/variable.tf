@@ -10,7 +10,7 @@ variable "resource_group_name" {
   #description = "The Azure region where resources will be created"
   #type        = string
   #default     = "West US 2"
-}
+#}
 
 variable "app_service_plan_name" {
   description = "The name of the App Service Plan"
