@@ -1,44 +1,21 @@
 apiVersion: backstage.io/v1alpha1
-kind: System
-metadata:
-  name: ${{ values.name }}
-  description: ${{ values.description }}
-spec:
-  owner: ${{ values.owner }}
----
-apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: ${{ values.name }}
-  description: ${{ values.description }}
+  name: webapp-dotnet
+  description: "Provision webapp & deploy dotnet app"
   annotations:
-     backstage.io/techdocs-ref: dir:./docs
-     github.com/project-slug: prayankag/gitactions
-     github-actions: enabled
-     github.com/workflows: |
+    backstage.io/techdocs-ref: dir:./docs
+    github.com/project-slug: prayankag/gitactions
+    github-actions: enabled
+    github.com/workflows: |
       [
         {
-          "workflow": "dotnet.yaml",
+          "workflow": "terraform_dotnet.yaml",
           "label": "Start",
           "tooltip": "click here and start the workflow process"
         }
       ]
 spec:
   type: service
-  owner: ${{ values.owner }}
-  lifecycle: experimental
-  system: ${{ values.name }}
-  providesApis:
-    - ${{ values.name }}
----
-apiVersion: backstage.io/v1alpha1
-kind: API
-metadata:
-  name: ${{ values.name }}
-  description: ${{ values.description }}
-spec:
-  type: internal
-  lifecycle: experimental
-  owner: ${{ values.owner }}
-  system: ${{ values.name }}
-  definition: "${{ values.description }}"
+  owner: prayankag
+  lifecycle: production
