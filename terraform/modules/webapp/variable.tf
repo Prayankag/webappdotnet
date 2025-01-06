@@ -12,7 +12,7 @@ variable "app_service_plan_name" {
   default     = "java-springboot-plan"
 }
 
-variable "web_app_name" {
+variable "appname" {
   description = "The name of the Web App"
   type        = string
   default     = "java-springboot-jpa-docker-azure"
