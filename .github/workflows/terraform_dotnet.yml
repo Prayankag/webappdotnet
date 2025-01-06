@@ -27,7 +27,7 @@ jobs:
   terraform-deployment:
     runs-on: ubuntu-latest
     env:
-      TF_WORKING_DIR: ${{ github.workspace }}/terraform/modules/${{ github.event.inputs.resourcetype }}  # Correct working directory
+      TF_WORKING_DIR: ${{ '${{ github.workspace }}' }}/terraform/modules/${{ '${{ github.event.inputs.resourcetype }}' }}  # Correct working directory
       GO_VERSION: '1.21.0'
       TF_VERSION: '1.3.5'
 
@@ -43,17 +43,17 @@ jobs:
       - name: Setup Azure Login using Service Principal
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ '${{ secrets.AZURE_CREDENTIALS }}' }}
       
-      - name: Set up Go ${{ env.GO_VERSION }}
+      - name: Set up Go ${{ '${{ env.GO_VERSION }}' }}
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version: ${{ '${{ env.GO_VERSION }}' }}
 
-      - name: Install Terraform ${{ env.TF_VERSION }}
+      - name: Install Terraform ${{ '${{ env.TF_VERSION }}' }}
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: ${{ env.TF_VERSION }}
+          terraform_version: ${{ '${{ env.TF_VERSION }}' }}
 
       - name: Clean Go Cache
         run: |
@@ -62,21 +62,21 @@ jobs:
 
       - name: Terraform Init
         run: |
-          terraform -chdir=${{ env.TF_WORKING_DIR }} init -upgrade
+          terraform -chdir=${{ '${{ env.TF_WORKING_DIR }}' }} init -upgrade
 
       - name: Terraform Validate
         run: |
-          terraform -chdir=${{ env.TF_WORKING_DIR }} validate
+          terraform -chdir=${{ '${{ env.TF_WORKING_DIR }}' }} validate
 
       - name: Run Unit Tests with Terratest
         run: |
-          cd ${{ env.TF_WORKING_DIR }}
-          export TF_VAR_ENV="${{ github.event.inputs.environment }}"
+          cd ${{ '${{ env.TF_WORKING_DIR }}' }}
+          export TF_VAR_ENV="${{ '${{ github.event.inputs.environment }}' }}"
 
           # Initialize Go module if not already initialized
           if [ ! -f "go.mod" ]; then
             echo "Initializing Go module..."
-            go mod init $(basename ${{ env.TF_WORKING_DIR }})
+            go mod init $(basename ${{ '${{ env.TF_WORKING_DIR }}' }})
           else
             echo "go.mod already exists, skipping initialization."
           fi
@@ -99,26 +99,26 @@ jobs:
       - name: Terraform Plan
         run: |
           echo "Running Terraform Plan with environment-specific tfvars..."
-          ENV_TFVARS="terraform/environments/${{ github.event.inputs.environment }}/terraform.tfvars"
-          terraform -chdir=${{ env.TF_WORKING_DIR }} plan -out=tfplan -var-file=${{ github.workspace }}/${ENV_TFVARS}
+          ENV_TFVARS="terraform/environments/${{ '${{ github.event.inputs.environment }}' }}/terraform.tfvars"
+          terraform -chdir=${{ '${{ env.TF_WORKING_DIR }}' }} plan -out=tfplan -var-file=${{ '${{ github.workspace }}' }}/${ENV_TFVARS}
 
       - name: Terraform Apply
         run: |
           echo "Applying Terraform Plan..."
-          ENV_TFVARS="terraform/environments/${{ github.event.inputs.environment }}/terraform.tfvars"
+          ENV_TFVARS="terraform/environments/${{ '${{ github.event.inputs.environment }}' }}/terraform.tfvars"
           # Apply with correct path to tfvars file
-          terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve -var-file=${{ github.workspace }}/${ENV_TFVARS}
+          terraform -chdir=${{ '${{ env.TF_WORKING_DIR }}' }} apply -auto-approve -var-file=${{ '${{ github.workspace }}' }}/${ENV_TFVARS}
 
       - name: Remove terraform.lock.hcl
         run: |
           echo "Removing terraform.lock.hcl after applying..."
-          rm -f ${{ env.TF_WORKING_DIR }}/terraform.lock.hcl
+          rm -f ${{ '${{ env.TF_WORKING_DIR }}' }}/terraform.lock.hcl
 
   build-and-deploy:
     runs-on: ubuntu-latest
     needs: terraform-deployment  # Ensure it runs after terraform deployment
     outputs:
-      artifact-path: ${{ steps.upload-artifact.outputs.artifact-path }}
+      artifact-path: ${{ '${{ steps.upload-artifact.outputs.artifact-path }}' }}
 
     steps:
       - name: Checkout code
@@ -176,7 +176,7 @@ jobs:
       - name: Setup Azure Login using Service Principal
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ '${{ secrets.AZURE_CREDENTIALS }}' }}
 
       - name: Download Artifact
         uses: actions/download-artifact@v3
@@ -187,18 +187,18 @@ jobs:
       - name: Deploy to Dev Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ github.event.inputs.appname }}
+          app-name: ${{ '${{ github.event.inputs.appname }}' }}
           package: ./drop.zip
 
       - name: Validate Dev Deployment
         id: validate-dev
         run: |
-          curl -s --head --request GET https://${{ github.event.inputs.appname }}.azurewebsites.net/ || exit 1
+          curl -s --head --request GET https://${{ '${{ github.event.inputs.appname }}' }}.azurewebsites.net/ || exit 1
 
   deploy-to-staging:
     runs-on: ubuntu-latest
     needs: deploy-to-dev
-    if: ${{ needs.deploy-to-dev.result == 'success' }}
+    if: ${{ '${{ needs.deploy-to-dev.result == 'success' }}' }}
     environment:
       name: staging
 
@@ -209,12 +209,12 @@ jobs:
       - name: Setup Azure Login using Service Principal
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ '${{ secrets.AZURE_CREDENTIALS }}' }}
    
       - name: Request Approval to Deploy to Staging
         uses: github-actions/approval-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
           environment: 'staging'
           approvers: 'staging-team'
 
@@ -227,13 +227,13 @@ jobs:
       - name: Deploy to Staging Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ secrets.AZURE_STAGING_WEBAPP_NAME }}
+          app-name: ${{ '${{ secrets.AZURE_STAGING_WEBAPP_NAME }}' }}
           package: ./drop.zip
 
   deploy-to-production:
     runs-on: ubuntu-latest
     needs: deploy-to-staging
-    if: ${{ needs.deploy-to-staging.result == 'success' }}
+    if: ${{ '${{ needs.deploy-to-staging.result == 'success' }}' }}
     environment:
       name: production
 
@@ -244,12 +244,12 @@ jobs:
       - name: Setup Azure Login using Service Principal
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ '${{ secrets.AZURE_CREDENTIALS }}' }}
 
       - name: Request Approval to Deploy to Production
         uses: github-actions/approval-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
           environment: 'production'
           approvers: 'production-team'
 
@@ -262,5 +262,5 @@ jobs:
       - name: Deploy to Production Web App
         uses: azure/webapps-deploy@v2
         with:
-          appname: ${{ secrets.AZURE_PRODUCTION_WEBAPP_NAME }}
+          appname: ${{ '${{ secrets.AZURE_PRODUCTION_WEBAPP_NAME }}' }}
           package: ./drop.zip
