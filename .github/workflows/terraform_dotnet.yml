@@ -198,7 +198,7 @@ jobs:
   deploy-to-staging:
     runs-on: ubuntu-latest
     needs: deploy-to-dev
-    if: ${{ success() }}
+    if: ${{ needs.deploy-to-dev.result == 'success' }}
     environment:
       name: staging
 
@@ -227,7 +227,7 @@ jobs:
       - name: Deploy to Staging Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ '${{ secrets.AZURE_STAGING_WEBAPP_NAME }}' }}
+          app-name: ${{ '${{ github.event.inputs.appname }}' }}
           package: ./drop.zip
 
   deploy-to-production:
@@ -262,5 +262,5 @@ jobs:
       - name: Deploy to Production Web App
         uses: azure/webapps-deploy@v2
         with:
-          appname: ${{ '${{ secrets.AZURE_PRODUCTION_WEBAPP_NAME }}' }}
+          appname: ${{ '${{ github.event.inputs.appname }}' }}
           package: ./drop.zip
