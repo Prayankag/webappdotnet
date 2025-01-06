@@ -52,6 +52,8 @@ jobs:
             -u a2d89136-b086-4755-9f98-af856c2d8c30 \
             -p QEt8Q~el5WQ8JWv56IsRMvM5mSJeMHsflwyEJbQ7 \
             --tenant 13085c86-4bcb-460a-a6f0-b373421c6323
+            
+          az account set --subscription "f936a180-7b93-4203-8faa-f376529bd4f8"
 
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v3
