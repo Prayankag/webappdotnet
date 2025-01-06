@@ -36,7 +36,7 @@ resource "azurerm_service_plan" "example" {
 }
 
 resource "random_string" "unique" {
-  length  = 8
+  length  = 3
   special = false
   upper   = false
 }
