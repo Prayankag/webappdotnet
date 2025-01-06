@@ -5,7 +5,7 @@ metadata:
   description: "Provision webapp & deploy dotnet app"
   annotations:
     backstage.io/techdocs-ref: dir:./docs
-    github.com/project-slug: ${{ parameters.repoUrl }}}
+    github.com/project-slug: ${{ parameters.repoUrl }}
     github-actions: enabled
 spec:
   type: service
