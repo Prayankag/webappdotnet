@@ -51,7 +51,7 @@ jobs:
           az login --service-principal \
             -u a2d89136-b086-4755-9f98-af856c2d8c30 \
             -p QEt8Q~el5WQ8JWv56IsRMvM5mSJeMHsflwyEJbQ7 \
-            --tenant 13085c86-4bcb-460a-a6f0-b373421c63
+            --tenant 13085c86-4bcb-460a-a6f0-b373421c6323
 
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v3
@@ -192,7 +192,7 @@ jobs:
           az login --service-principal \
             -u a2d89136-b086-4755-9f98-af856c2d8c30 \
             -p QEt8Q~el5WQ8JWv56IsRMvM5mSJeMHsflwyEJbQ7 \
-            --tenant 13085c86-4bcb-460a-a6f0-b373421c63
+            --tenant 13085c86-4bcb-460a-a6f0-b373421c6323
 
       - name: Download Artifact
         uses: actions/download-artifact@v3
@@ -232,7 +232,7 @@ jobs:
           az login --service-principal \
             -u a2d89136-b086-4755-9f98-af856c2d8c30 \
             -p QEt8Q~el5WQ8JWv56IsRMvM5mSJeMHsflwyEJbQ7 \
-            --tenant 13085c86-4bcb-460a-a6f0-b373421c63
+            --tenant 13085c86-4bcb-460a-a6f0-b373421c6323
             
       - name: Request Approval to Deploy to Staging
         uses: github-actions/approval-action@v2
