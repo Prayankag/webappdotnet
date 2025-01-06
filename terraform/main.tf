@@ -11,7 +11,7 @@ provider "azurerm" {
 # Use environment-specific values dynamically
 module "webapp" {
   source              = "./modules/webapp"
-  web_app_name            = var.web_app_name
+  appname            = var.appname
   environment         = var.environment
   resource_group_name      = data.azurerm_resource_group.example.name
   location                 = data.azurerm_resource_group.example.location 
