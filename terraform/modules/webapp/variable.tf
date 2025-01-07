@@ -38,7 +38,7 @@ variable "client_id" {
   type        = string
   default     = "a2d89136-b086-4755-9f98-af856c2d8c30"  # Use "Windows" for a Windows app
 }
-variable "clientsecret" {
+variable "client_secret" {
   type        = string
   default     = "test"
   }
@@ -57,5 +57,5 @@ variable "key_vault_name" {
 variable "secret_name" {
   description = "The name of the secret to store in Key Vault"
   type        = string
-  default     = "clientsecret"
+  default     = "client_secret"
 }
