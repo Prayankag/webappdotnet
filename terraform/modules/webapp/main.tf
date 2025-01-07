@@ -17,7 +17,7 @@ provider "azurerm" {
   features {}
   subscription_id = var.subscription_id
   client_id       = var.client_id
-  client_secret  = var.clientsecret
+  client_secret  = var.client_secret
   tenant_id      = var.tenant_id
 }
 
@@ -33,7 +33,7 @@ data "azurerm_key_vault" "example" {
 
 # Fetch the secret from Azure Key Vault
 data "azurerm_key_vault_secret" "example" {
-  name         = var.clientsecret  # Name of the secret stored in the Key Vault
+  name         = var.client_secret  # Name of the secret stored in the Key Vault
   key_vault_id = data.azurerm_key_vault.example.id
 }
 
